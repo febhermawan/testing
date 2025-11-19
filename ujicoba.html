@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Mahasiswa Bisnis Digital</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Smooth Modal Transition */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        body.modal-active {
+            overflow-x: hidden;
+            overflow-y: visible !important;
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-2 rounded-lg">
+                        <i data-lucide="graduation-cap" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight">Mahasiswa Bisdig</h1>
+                        <p class="text-blue-100 text-sm">Daftar Angkatan - Bisnis Digital</p>
+                    </div>
+                </div>
+                <div class="text-right hidden md:block">
+                    <p class="text-sm font-medium opacity-80">Total Data</p>
+                    <p class="text-2xl font-bold" id="total-count-header">0</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        
+        <!-- Search Control -->
+        <div class="max-w-5xl mx-auto mb-8">
+            <div class="relative group shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="h-5 w-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"></i>
+                </div>
+                <input type="text" id="searchInput" 
+                    class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                    placeholder="Cari berdasarkan Nama atau NIM...">
+            </div>
+        </div>
+
+        <!-- Data Table Card -->
+        <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">
+                                No
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">
+                                NIM
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Nama Mahasiswa
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">
+                                Aksi
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100" id="tableBody">
+                        <!-- Data rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State (Hidden by default) -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-center">
+                <div class="bg-gray-50 p-4 rounded-full mb-3">
+                    <i data-lucide="search-x" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Data tidak ditemukan</h3>
+                <p class="text-gray-500 max-w-sm mt-1">Coba kata kunci lain atau periksa kembali ejaan nama/NIM.</p>
+            </div>
+        </div>
+
+        <!-- Stats Footer inside content -->
+        <div class="max-w-5xl mx-auto mt-4 text-right text-sm text-gray-500">
+            Menampilkan <span id="shown-count" class="font-semibold text-gray-800">0</span> dari <span id="total-count" class="font-semibold text-gray-800">0</span> mahasiswa
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="container mx-auto px-4 py-6 text-center text-gray-500 text-sm">
+            &copy; 2024 Portal Data Mahasiswa. Bisnis Digital.
+        </div>
+    </footer>
+
+    <!-- Modal Edit Form -->
+    <div id="editModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+
+            <!-- Modal Panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i data-lucide="pencil" class="h-6 w-6 text-blue-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">Edit Data Mahasiswa</h3>
+                            <div class="mt-4 space-y-4">
+                                <!-- Form Inputs -->
+                                <div>
+                                    <label for="editNim" class="block text-sm font-medium text-gray-700 mb-1">NIM</label>
+                                    <input type="text" id="editNim" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                </div>
+                                <div>
+                                    <label for="editName" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                    <input type="text" id="editName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                </div>
+                                <div>
+                                    <label for="editStatus" class="block text-sm font-medium text-gray-700 mb-1">Status Mahasiswa</label>
+                                    <select id="editStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-colors">
+                                        <option value="Aktif">Aktif</option>
+                                        <option value="Cuti">Cuti</option>
+                                        <option value="Non-Aktif">Non-Aktif</option>
+                                        <option value="Lulus">Lulus</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                    <button type="button" onclick="saveStudentData()" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm transition-colors">
+                        Simpan Perubahan
+                    </button>
+                    <button type="button" onclick="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Parsed from User Input (Added 'status' property)
+        // Using "let" so we can modify it
+        let rawData = [
+            { nim: "1710625164", name: "NALENDRA", status: "Aktif" },
+            { nim: "1710625165", name: "IDZHAR FIRLI AKBAR", status: "Aktif" },
+            { nim: "1710625166", name: "PUTRI REZMA AZZAHRA", status: "Aktif" },
+            { nim: "1710625167", name: "ANEZKA FAYZA AUGIE HARIJANTO", status: "Aktif" },
+            { nim: "1710625168", name: "M HASAN BASRI FAIZ", status: "Aktif" },
+            { nim: "1710625170", name: "KEYZAR DICK MALVIA", status: "Aktif" },
+            { nim: "1710625174", name: "MUHAMMAD AKSAN ALBIREO", status: "Aktif" },
+            { nim: "1710625175", name: "GANENDRA ARYASATYA FIAGI", status: "Aktif" },
+            { nim: "1710625180", name: "MUHAMMAD RAFASYA GUSMAN", status: "Aktif" },
+            { nim: "1710625181", name: "MUHAMMAD AZKI IHSANUR RIDWAN", status: "Aktif" },
+            { nim: "1710625183", name: "VANESSA ZENITA SHAHNAZ", status: "Aktif" },
+            { nim: "1710625184", name: "MUHAMMAD AVEMPEACE IBNUSINA", status: "Aktif" },
+            { nim: "1710625188", name: "ABDUL GHANI AZHARI", status: "Aktif" },
+            { nim: "1710625200", name: "MAHENDRA REY DINATA", status: "Aktif" }
+        ];
+
+        let currentEditingIndex = -1; // Track which student is being edited
+
+        // DOM Elements
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const emptyState = document.getElementById('emptyState');
+        const shownCountEl = document.getElementById('shown-count');
+        const totalCountEl = document.getElementById('total-count');
+        const totalCountHeaderEl = document.getElementById('total-count-header');
+        
+        // Modal Elements
+        const editModal = document.getElementById('editModal');
+        const editNimInput = document.getElementById('editNim');
+        const editNameInput = document.getElementById('editName');
+        const editStatusInput = document.getElementById('editStatus');
+
+        // Function to Render Table
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tableBody.parentElement.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            } else {
+                tableBody.parentElement.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+
+                data.forEach((student) => {
+                    // Find original index to allow editing even when filtered
+                    const originalIndex = rawData.indexOf(student);
+
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-blue-50 transition-colors duration-150 group';
+                    
+                    // Avatar generator (Initials)
+                    const initials = student.name.split(' ').map(n => n[0]).slice(0, 2).join('');
+                    
+                    // Status Color Logic
+                    let statusColor = "bg-green-100 text-green-800 border-green-200";
+                    let statusDot = "bg-green-500";
+                    
+                    if(student.status === 'Cuti') {
+                        statusColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
+                        statusDot = "bg-yellow-500";
+                    } else if (student.status === 'Non-Aktif') {
+                        statusColor = "bg-red-100 text-red-800 border-red-200";
+                        statusDot = "bg-red-500";
+                    }
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                            ${originalIndex + 1}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-sm font-mono font-bold border border-gray-200 group-hover:bg-white group-hover:border-blue-200 transition-colors">
+                                ${student.nim}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm mr-3">
+                                    ${initials}
+                                </div>
+                                <div class="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                    ${student.name}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor}">
+                                <span class="w-1.5 h-1.5 mr-1.5 ${statusDot} rounded-full"></span>
+                                ${student.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="openModal(${originalIndex})" class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors" title="Edit Data">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // Re-initialize icons for new elements
+            lucide.createIcons();
+
+            // Update counters
+            shownCountEl.textContent = data.length;
+            totalCountEl.textContent = rawData.length;
+            totalCountHeaderEl.textContent = rawData.length;
+        }
+
+        // --- MODAL FUNCTIONS ---
+
+        function openModal(index) {
+            currentEditingIndex = index;
+            const student = rawData[index];
+
+            // Populate form
+            editNimInput.value = student.nim;
+            editNameInput.value = student.name;
+            editStatusInput.value = student.status;
+
+            // Show modal
+            editModal.classList.remove('hidden');
+            // Animate
+            setTimeout(() => {
+                editModal.firstElementChild.classList.add('opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            editModal.classList.add('hidden');
+            currentEditingIndex = -1;
+        }
+
+        function saveStudentData() {
+            if (currentEditingIndex > -1) {
+                // Get values
+                const newNim = editNimInput.value.trim();
+                const newName = editNameInput.value.trim();
+                const newStatus = editStatusInput.value;
+
+                // Simple validation
+                if (!newNim || !newName) {
+                    alert("NIM dan Nama tidak boleh kosong!");
+                    return;
+                }
+
+                // Update Data
+                rawData[currentEditingIndex] = {
+                    nim: newNim,
+                    name: newName.toUpperCase(), // Keep Uppercase consistency
+                    status: newStatus
+                };
+
+                // Refresh Table with current search filter applied
+                triggerSearch();
+                
+                // Close Modal
+                closeModal();
+            }
+        }
+
+        // --- SEARCH FUNCTIONS ---
+
+        function triggerSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredData = rawData.filter(student => 
+                student.name.toLowerCase().includes(searchTerm) || 
+                student.nim.includes(searchTerm)
+            );
+            renderTable(filteredData);
+        }
+
+        searchInput.addEventListener('input', triggerSearch);
+
+        // Initial Render
+        lucide.createIcons();
+        renderTable(rawData);
+
+    </script>
+</body>
+</html>
